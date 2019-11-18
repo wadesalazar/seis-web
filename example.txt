@@ -1,0 +1,52 @@
+
+.... give the following
+var svgContainer = d3.select("body").append("svg").attr("width", 4000).attr("height", 4000);
+var lineFunction = d3.line().x(function(d) { return d.x; }).y(function(d) { return d.y; }).curve(d3.curveBasis);
+
+function handleData(d){
+    var lineGraph = svgContainer.append("path").attr("d", lineFunction(d)).attr("stroke", "blue").attr("stroke-width", 0.05).attr("fill", "none");
+}
+
+.... add traces
+
+
+..... using JSON with sockets
+
+const socket = new WebSocket('ws://localhost:8080/getTrace');
+
+socket.addEventListener('message', function (event) {
+    handleData(JSON.parse(event.data));
+});
+
+for(i = 0; i < 2000; i++){socket.send(JSON.stringify({ index: i, samples: 2000, offset: (10 + i), threshold: 3000 }))}
+
+.... using binary with sockets
+
+const socket2 = new WebSocket('ws://localhost:8080/websocketbytes');
+
+socket2.addEventListener('message', function (event) {
+	x = event.data.arrayBuffer().then(function(d){handleData(MessagePack.decode(d))});
+})
+
+for(i = 0; i < 2000; i++){socket2.send(MessagePack.encode({ index: i, samples: 2000, offset: (10 + i), threshold: 3000 }))}
+
+... using HTTP data provier  **broken**
+
+for(i = 0; i < 200; i++){var sthin = $.post( "http://localhost:8080/pickTrace", { index: i, samples: 200, offset: (10 + i), threshold: 3000 }, function( data ) { handleData(data); });}
+
+input = { index: 0, samples: 2000, offset: 100, threshold: 3000 }
+var sthin = $.post( "http://localhost:8080/pickTrace", input, function( data ) { handleData(data); });
+
+
+... add paths to svg first
+
+
+var lineFunction = d3.line().x(function(d) { return d.x; }).y(function(d) { return d.y; }).curve(d3.curveBasis);
+svgContainer = d3.create("svg:svg").attr("width", 4000).attr("height", 4000);
+function handleData(d){
+    var lineGraph = svgContainer.append("path").attr("d", lineFunction(d)).attr("stroke", "blue").attr("stroke-width", 0.05).attr("fill", "none");
+}
+
+
+for(i = 0; i < 2000; i++){socket.send(JSON.stringify({ index: i, samples: 2000, offset: (10 + i), threshold: 3000 }))}
+d3.select("body").append(() => svgContainer.node())
